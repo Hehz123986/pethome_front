@@ -20,49 +20,61 @@
 
     <div class="right-block">
       <div class="sidebar-action">
-        <el-button icon="el-icon-plus">新增人员</el-button>
+        <el-button icon="el-icon-plus" @click="dialogFormVisible = true">新增人员</el-button>
         <el-button icon="el-icon-delete">批量删除</el-button>
       </div>
-      <el-table
-        v-loading="listLoading"
-        :data="list"
-        element-loading-text="Loading"
-        border
-        fit
-        highlight-current-row
-      >
-        <el-table-column align="center" label="ID" width="95">
+      <!-- 在表格中显示用户信息 -->
+      <el-table :data="tableData" border stripe>
+        <el-table-column type="index" width="80"/>
+        <el-table-column label="ID" prop="id" width="80"/>
+        <el-table-column label="姓名" prop="username" width="80"/>
+        <el-table-column label="邮箱" prop="email" width="150"/>
+        <el-table-column label="电话" prop="phone" width="120"/>
+        <el-table-column label="年龄" prop="age" width="70"/>
+        <el-table-column label="部门id" prop="did" width="70"/>
+        <el-table-column
+          fixed="right"
+          label="操作"
+          width="250"
+        >
           <template slot-scope="scope">
-            {{ scope.$index }}
-          </template>
-        </el-table-column>
-        <el-table-column label="Title">
-          <template slot-scope="scope">
-            {{ scope.row.title }}
-          </template>
-        </el-table-column>
-        <el-table-column label="Author" width="110" align="center">
-          <template slot-scope="scope">
-            <span>{{ scope.row.author }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="Pageviews" width="110" align="center">
-          <template slot-scope="scope">
-            {{ scope.row.pageviews }}
-          </template>
-        </el-table-column>
-        <el-table-column class-name="status-col" label="Status" width="110" align="center">
-          <template slot-scope="scope">
-            <el-tag :type="scope.row.status | statusFilter">{{ scope.row.status }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column align="center" prop="created_at" label="Display_time" width="200">
-          <template slot-scope="scope">
-            <i class="el-icon-time" />
-            <span>{{ scope.row.display_time }}</span>
+            <el-button @click="deleteEmployee(scope.row)">删除</el-button>
+            <el-button @click="editEmployee(scope.row)">编辑</el-button>
           </template>
         </el-table-column>
       </el-table>
+      <el-dialog title="新增员工" :visible.sync="dialogFormVisible">
+        <el-form :model="form">
+          <el-form-item label="姓名" :label-width="formLabelWidth">
+            <el-input v-model="form.username" auto-complete="off"/>
+          </el-form-item>
+          <el-form-item label="邮箱" :label-width="formLabelWidth">
+            <el-input v-model="form.email" auto-complete="off"/>
+          </el-form-item>
+          <el-form-item label="电话" :label-width="formLabelWidth">
+            <el-input v-model="form.phone" auto-complete="off"/>
+          </el-form-item>
+          <el-form-item label="密码" :label-width="formLabelWidth">
+            <el-input v-model="form.password" auto-complete="off"/>
+          </el-form-item>
+          <el-form-item label="年龄" :label-width="formLabelWidth">
+            <el-input v-model="form.age" auto-complete="off"/>
+          </el-form-item>
+          <el-form-item label="部门id" :label-width="formLabelWidth">
+            <el-input v-model="form.did" autocomplete="off"/>
+          </el-form-item>
+          <el-form-item label="状态" :label-width="formLabelWidth">
+            <el-select v-model="form.state" placeholder="请选择你的状态">
+              <el-option label="在职" value="0"/>
+              <el-option label="离职" value="1"/>
+            </el-select>
+          </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button @click="dialogFormVisible = false">取 消</el-button>
+          <el-button type="primary" @click="add">确 定</el-button>
+        </div>
+      </el-dialog>
     </div>
   </div>
 
@@ -70,8 +82,8 @@
 
 <script>
 import { list } from '@/api/department'
-import { getList } from '@/api/table'
 import { deleteDepartment } from '@/api/department'
+import { addEmployee, deleteEmployee, find, updateEmployee } from '@/api/employee'
 
 export default {
   data() {
@@ -81,7 +93,20 @@ export default {
       defaultProps: {
         children: 'children',
         label: 'name'
-      }
+      },
+      tableData: [],
+      dialogFormVisible: false,
+      form: {
+        name: '',
+        region: '',
+        date1: '',
+        date2: '',
+        delivery: false,
+        type: [],
+        resource: '',
+        desc: ''
+      },
+      formLabelWidth: '120px'
     }
   },
   watch: {
@@ -92,7 +117,6 @@ export default {
     this.treeData()
     this.fetchData()
   },
-
   methods: {
     filterNode(value, data) {
       if (!value) return true
@@ -106,12 +130,11 @@ export default {
         this.data1 = this.data
       })
     },
-
     fetchData() {
       this.listLoading = true
-      getList().then(response => {
-        this.list = response.data.items
-        this.listLoading = false
+      find().then(response => {
+        this.data = response.data
+        this.tableData = this.data
       })
     },
     toAddDepartmentPage() {
@@ -123,16 +146,9 @@ export default {
         const d1 = this.data1[0]
         this.$router.push({ name: 'Create', params: { data: d1 }})
       }
-      // 获取当前的企业是那个
-      // this.$router.push({ path: '/department/create' })
     },
-
     deleteDepartment() {
       const currentNode = this.$refs.tree2.getCurrentNode()
-      if (!currentNode) {
-        this.$message.warning('请选择要删除的部门')
-        return
-      }
       const departmentId = currentNode.id
       this.$confirm('确认删除该部门吗?', '提示', {
         confirmButtonText: '确定',
@@ -142,15 +158,71 @@ export default {
         .then(() => {
           deleteDepartment({ id: departmentId })
             .then(() => {
-              // 处理删除成功的情况
               this.treeData()
               this.fetchData()
               this.$message.success('部门删除成功')
             })
             .catch(error => {
-              // 处理删除失败的情况
               console.error('删除部门失败', error)
               this.$message.error('部门删除失败')
+            })
+        })
+    },
+    add() {
+      this.$message('submit!')
+      console.log(this.form)
+      const requestData = {
+        username: this.form.username,
+        password: this.form.password,
+        email: this.form.email,
+        phone: this.form.phone,
+        state: this.form.state,
+        age: this.form.age,
+        did: this.form.did
+      }
+      addEmployee(requestData).then(response => {
+        console.log(response)
+        if (response['resultCode'] === 200) {
+          this.fetchData()
+          this.$router.push({ path: '/department/index' })
+        } else {
+          this.$message(response['message'])
+        }
+      })
+    },
+    editEmployee(row) {
+      this.$message('submit!')
+      console.log(this.form)
+      const requestData = {
+        username: this.form.username,
+        password: this.form.password,
+        email: this.form.email,
+        phone: this.form.phone,
+        state: this.form.state,
+        age: this.form.age,
+        did: this.form.did
+      }
+      updateEmployee(requestData).then(response => {
+        console.log(response)
+        if (response['resultCode'] === 200) {
+          this.fetchData()
+          this.$router.push({ path: '/department/index' })
+        } else {
+          this.$message(response['message'])
+        }
+      })
+    },
+    deleteEmployee(row) {
+      const id = row.id
+        .then(() => {
+          deleteEmployee({ id: id })
+            .then((response) => {
+              if (response['resultCode'] === 200) {
+                this.fetchData()
+                this.$message.success('部门删除成功')
+              } else {
+                this.$message.error('部门删除失败')
+              }
             })
         })
     }
@@ -159,10 +231,11 @@ export default {
 </script>
 
 <style scoped>
-.sidebar-action{
+.sidebar-action {
   margin-bottom: 16px;
   margin-top: 18px;
 }
+
 .app-container {
   flex: 1;
   display: flex;
@@ -170,14 +243,16 @@ export default {
   font-size: 14px;
   padding-right: 8px;
 }
-.left-block{
+
+.left-block {
   width: 300px;
   flex-grow: 1;
   margin-left: 32px;
   margin-right: 32px;
   border-right: 2px solid gainsboro;
 }
-.right-block{
+
+.right-block {
   flex-grow: 2;
 }
 </style>

@@ -1,4 +1,5 @@
 const chokidar = require('chokidar')
+const bodyParser = require('body-parser')
 const chalk = require('chalk')
 const path = require('path')
 const Mock = require('mockjs')
@@ -30,7 +31,6 @@ function unregisterRoutes() {
   })
 }
 
-
 // for mock server
 const responseFake = (url, type, respond) => {
   return {
@@ -46,10 +46,10 @@ const responseFake = (url, type, respond) => {
 module.exports = app => {
   // parse app.body
   // https://expressjs.com/en/4x/api.html#req.body
-  // app.use(bodyParser.json())
-  // app.use(bodyParser.urlencoded({
-  //   extended: true
-  // }))
+  /* app.use(bodyParser.json())
+  app.use(bodyParser.urlencoded({
+    extended: true
+  })) */
 
   const mockRoutes = registerRoutes(app)
   var mockRoutesLength = mockRoutes.mockRoutesLength

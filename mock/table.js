@@ -21,7 +21,8 @@ module.exports = [
         resultCode: 200,
         data: {
           total: items.length,
-          items: items
+          items: items,
+          resultCode: 200
         }
       }
     }
