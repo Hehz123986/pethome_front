@@ -41,13 +41,8 @@
         </span>
       </el-form-item>
 
-      <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleLogin">Login</el-button>
-
-      <div class="tips">
-        <span style="margin-right:20px;">username: admin</span>
-        <span> password: any</span>
-      </div>
-
+      <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:16px;" @click.native.prevent="handleLogin">登录</el-button>
+      <el-button  class="shop_register" :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleShopRegister">商家入驻</el-button>
     </el-form>
   </div>
 </template>
@@ -120,6 +115,9 @@ export default {
           return false
         }
       })
+    },
+    handleShopRegister() {
+      this.$router.push({ path: '/shopregister' })
     }
   }
 }
@@ -168,6 +166,9 @@ $cursor: #fff;
     background: rgba(0, 0, 0, 0.1);
     border-radius: 5px;
     color: #454545;
+  }
+  .shop_register{
+    margin-left: 0;
   }
 }
 </style>

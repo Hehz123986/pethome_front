@@ -213,18 +213,17 @@ export default {
       })
     },
     deleteEmployee(row) {
-      const id = row.id
-        .then(() => {
-          deleteEmployee({ id: id })
-            .then((response) => {
-              if (response['resultCode'] === 200) {
-                this.fetchData()
-                this.$message.success('部门删除成功')
-              } else {
-                this.$message.error('部门删除失败')
-              }
-            })
-        })
+      console.log(row.id)
+      const Id = {
+        id: row.id
+      }
+      deleteEmployee(Id).then(response => {
+        if (response['resultCode'] === 200) {
+          this.$message('删除成功')
+        } else {
+          this.$message(response['message'])
+        }
+      })
     }
   }
 }
