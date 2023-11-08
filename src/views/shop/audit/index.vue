@@ -55,10 +55,13 @@
     </el-table>
     <el-pagination
       class="pagination"
-      align="center"
+      align="right"
       background
-      layout="prev,pager,next"
-      :total="size"
+      layout="prev, pager, next"
+      :page-size="per_page"
+      :total="total"
+      :current-page="currentPage"
+      @current-change="handleCurrentChange"
     />
     <div>
       <el-dialog :title="dialogTitle" :visible.sync="dialogVisible">
@@ -87,7 +90,7 @@
 
 <script>
 
-import { deleteShop, list, passShop, refuseShop, updateShop } from '@/api/shop'
+import { deleteShop, paging, passShop, refuseShop, updateShop } from '@/api/shop'
 
 export default {
   filters: {
@@ -104,7 +107,11 @@ export default {
     return {
       list: null,
       listLoading: true,
+      total: 0,
+      currentPage: 1,
+      per_page: 2,
       Data: [],
+      dialogVisible: false,
       headArr: [
         { prop: 'id', label: 'id' },
         { prop: 'name', label: '店铺名' },
@@ -124,17 +131,36 @@ export default {
       console.log(strDateTime)
       return strDateTime
     },
+    handleCurrentChange(val) {
+      this.currentPage = val
+      this.fetchData()
+    },
     fetchData() {
       this.listLoading = true
-      list().then(response => {
+      const params = {
+        page: this.currentPage, // 获取当前页码
+        pageSize: this.per_page
+      }
+      console.log(params)
+      paging(params).then(response => {
         console.log(response)
         if (response['resultCode'] === 200) {
-          this.list = response.data
+          this.list = response.data.shops
           this.listLoading = false
+          console.log(this.list)
+          // 判断数据的数量是否小于每页显示的数量
+          if (this.list.length < params.pageSize) {
+            const emptyCount = params.pageSize - this.list.length
+            for (let i = 0; i < emptyCount; i++) {
+              this.list.push({})
+            }
+          }
+          this.listLoading = false
+          this.total = response.data.total
         } else {
           this.listLoading = false
           this.list = []
-          this.$message('数据请求失败，请刷新重试')
+          this.$message('数据请求失败')
         }
       })
     },

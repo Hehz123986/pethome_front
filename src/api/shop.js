@@ -44,3 +44,11 @@ export function passShop(params) {
     params
   })
 }
+export function paging(params) {
+  return request({
+    url: '/api/shop/paging',
+    method: 'post',
+    params: params
+  })
+}
+

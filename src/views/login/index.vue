@@ -42,13 +42,14 @@
       </el-form-item>
 
       <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:16px;" @click.native.prevent="handleLogin">登录</el-button>
-      <el-button  class="shop_register" :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleShopRegister">商家入驻</el-button>
+      <el-button class="shop_register" :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleShopRegister">商家入驻</el-button>
     </el-form>
   </div>
 </template>
 
 <script>
 import { validUsername } from '@/utils/validate'
+import { login } from '@/api/user'
 
 export default {
   name: 'Login',
@@ -101,7 +102,25 @@ export default {
       })
     },
     handleLogin() {
-      this.$refs.loginForm.validate(valid => {
+      const params = {
+        username: this.loginForm.username,
+        password: this.loginForm.password
+      }
+      console.log(params)
+      login(params).then(response => {
+        const token = response['token']
+        localStorage.setItem('token', token)
+        if (response['resultCode'] === 200) {
+          this.$message('登录成功')
+          const token = response.data['token']
+          localStorage.setItem('token', token)
+          this.$router.push({ path: this.redirect || '/' })
+          // this.$router.replace({path:"/audit/index"})
+        } else {
+          this.$message(response['message'])
+        }
+      })
+      /*  this.$refs.loginForm.validate(valid => {
         if (valid) {
           this.loading = true
           this.$store.dispatch('user/login', this.loginForm).then(() => {
@@ -114,7 +133,7 @@ export default {
           console.log('error submit!!')
           return false
         }
-      })
+      }) */
     },
     handleShopRegister() {
       this.$router.push({ path: '/shopregister' })
